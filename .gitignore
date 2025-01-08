@@ -1,0 +1,24 @@
+# Diretórios Node.js
+node_modules/
+
+# Arquivos gerados pelo npm
+package-lock.json
+
+# Arquivos de log
+npm-debug.log
+
+# Arquivos temporários
+*.jade
+*.pug
+*.tmp
+*.swp
+
+# Diretório de saída build
+/build
+
+dist
+logs
+.env
+yarn.lock
+src/data-source.ts
+.vscode
