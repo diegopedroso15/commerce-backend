@@ -1,55 +1,37 @@
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt"
-import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
+import { query } from "../utils/db-utils";
 
-export const AuthenticateUserService = async (username: string, password: string) => {
+const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
+
+export const AuthenticateUserService = async (email: string, password: string) => {
   try {
-    const prisma = new PrismaClient();
-    const pswd = await prisma.users.findFirst({
-      where: {
-        username: username,
-      },
-      select: {
-        password: true,
-      }
-    });
-    
-    if (!pswd) {
-      return {
-        code: 401,
-        message: "Invalid credentials"
-      };
-    };
-    
-    const match = await bcrypt.compare(password, pswd.password);
+    const userQuery = "SELECT * FROM users WHERE email = $1";
+    const [user] = await query(userQuery, [email]);
 
-    if (!match) {
+    if (!user) {
       return {
-        code: 401,
-        message: "Invalid credentials"
+        code: 404,
+        message: "User not found",
       };
     }
 
-    const user = await prisma.users.findFirst({
-      where: { username: username },
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return {
+        code: 401,
+        message: "Invalid email or password",
+      };
+    }
+
+    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
+      expiresIn: "1h",
     });
 
-    const token = jwt.sign({ username }, "senha", { expiresIn: "1d" });
-
-    await prisma.users.update({
-      where: { username: username },
-      data: {
-        token: token,
-        expires_in: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-      }
-    })
-
-    await prisma.$disconnect();
     return {
       code: 200,
-      message: "User authenticated successfully",
-      token,
-      isAdmin: user?.admin_user
+      message: "Authentication successful",
+      data: { token },
     };
   } catch (error) {
     return {

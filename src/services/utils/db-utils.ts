@@ -1,13 +1,12 @@
 import { AppDataSource } from "../../data-source";
-import logger from "../../utils/logger/default.logs";
 
 export async function query(query: string, params?: any[]) {
     try {
-        logger.info(`Executing query "${query}" with params: ${params}`);
+        console.info(`Executing query "${query}" with params: ${params}`);
         return await AppDataSource.query(query, params);
     } catch (error: any) {
-        logger.error("Err in query execution: " + error.message);
-        logger.error("Query: " + query);
+        console.error("Err in query execution: " + error.message);
+        console.error("Query: " + query);
         throw new Error("Err in query execution: " + error.message);
     }
 }
@@ -22,23 +21,6 @@ export class Filter {
     }
 };
 
-/*
-
-## Example:
-
-const filter = new Filter(
-    ["id", "name", "email", "phone"],  // allowed keys
-    req.query                          // selected filters
-);
-
-const result = await filteredQuery(
-    `SELECT * FROM table WHERE $*1 LIMIT $1 OFFSET $2`,
-    [filter], [pageSize, offset]
-);
-
-This function replaces $*1, $*2, ... with the WHERE clauses
-
-*/
 export async function filteredQuery(
     query_str: string,
     filters: Filter[],
@@ -49,7 +31,7 @@ export async function filteredQuery(
 
     const append_param = (param: any) => {
         params.push(param);
-        return params.length;  // 1-based indexing
+        return params.length;
     }
 
     for (const [index, filter] of filters.entries()) {
